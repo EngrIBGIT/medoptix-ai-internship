@@ -1,2 +1,58 @@
 pandas
 boto3
+
+
+# Core
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+joblib
+python-dotenv
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# AWS + S3
+boto3
+
+# Machine Learning
+scikit-learn
+xgboost
+catboost
+shap
+imblearn
+
+# Deep Learning
+tensorflow
+torch
+keras
+
+# Modeling + Evaluation
+mlxtend
+
+# API
+fastapi
+uvicorn
+
+# Dashboards
+streamlit
+
+# Notebook
+ipykernel
+jupyterlab
+
+
+boto3
+psycopg2
+sqlalchemy
+requests
+dotenv
+
+
+llvmlite
+shap
+
+
