@@ -23,7 +23,7 @@ warnings.filterwarnings('ignore')
 
 # Import database manager
 import sys
-sys.path.append('../app')
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 from database import DatabaseManager
 
 # Set up logging
@@ -164,6 +164,15 @@ class MedOptixAdherenceForecasting:
         for c in cat_cols:
             fs_df[c] = LabelEncoder().fit_transform(fs_df[c])
 
+        # Handle missing values - fill numeric NaNs with median and categorical with mode
+        for col in num_cols:
+            if col in fs_df.columns:
+                fs_df[col] = fs_df[col].fillna(fs_df[col].median())
+        
+        for col in cat_cols:
+            if col in fs_df.columns:
+                fs_df[col] = fs_df[col].fillna(fs_df[col].mode()[0])
+
         # Feature importance with RandomForest
         rf_fs = RandomForestClassifier(n_estimators=100, random_state=42)
         rf_fs.fit(fs_df[num_cols + cat_cols], fs_df[target_col])
@@ -251,7 +260,7 @@ class MedOptixAdherenceForecasting:
             plt.title(f"Adherence Forecasting - {name} Confusion Matrix")
             plt.savefig(f"reports/figures/adherence_forecasting/adherence_forecasting_{name.lower()}_confusion_matrix.png", 
                        dpi=300, bbox_inches='tight')
-            plt.show()
+            plt.close(fig)  # Close figure to prevent memory issues
         
         # Select best model based on accuracy
         best_model_name = max(results.keys(), key=lambda k: results[k]['accuracy'])
@@ -275,7 +284,17 @@ class MedOptixAdherenceForecasting:
         ])
         
         logger.info("Performing hyperparameter tuning...")
-        grid = GridSearchCV(rf_pipe, param_grid, scoring="f1_weighted", cv=3, n_jobs=-1)
+        
+        # Disable parallel processing to avoid pickling issues
+        grid = GridSearchCV(
+            rf_pipe, 
+            param_grid, 
+            scoring="f1_weighted", 
+            cv=3, 
+            n_jobs=1,  # Set to 1 to avoid parallel processing issues
+            verbose=2
+        )
+        
         grid.fit(X_train, y_train)
         
         logger.info(f"Best RF Params: {grid.best_params_}")
@@ -297,7 +316,7 @@ class MedOptixAdherenceForecasting:
             plt.tight_layout()
             plt.savefig("reports/figures/adherence_forecasting/adherence_forecasting_shap_summary.png", 
                        dpi=300, bbox_inches='tight')
-            plt.show()
+            plt.close()
             
         except Exception as e:
             logger.warning(f"Could not generate SHAP plot: {str(e)}")
@@ -362,7 +381,7 @@ if __name__ == "__main__":
     # Train classifiers
     best_models, best_model_name = forecaster.train_classifiers(X_train_proc, y_train, X_test_proc, y_test)
     
-    # Hyperparameter tuning
+    # Hyperparameter tuning (with parallel processing disabled)
     best_rf_pipe = forecaster.hyperparameter_tuning(X_train, y_train)
     joblib.dump(best_rf_pipe, "models/adherence_forecasting/adherence_forecasting_random_forest_best.pkl")
     

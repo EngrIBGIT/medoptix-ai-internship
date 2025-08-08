@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
@@ -24,8 +24,8 @@ class PatientInput(BaseModel):
     home_adherence_mean: float = Field(..., ge=0, le=100, description="Mean home exercise adherence percentage")
     satisfaction_mean: float = Field(..., ge=0, le=5, description="Mean patient satisfaction score")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "age": 35,
                 "gender": "Female",
@@ -45,6 +45,7 @@ class PatientInput(BaseModel):
                 "satisfaction_mean": 4.2
             }
         }
+    )
 
 class PatientBase(BaseModel):
     """Base patient model for database operations"""
@@ -58,8 +59,7 @@ class PatientBase(BaseModel):
     referral_source: str
     insurance_type: str
     
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Patient(PatientBase):
     """Full patient model with ID"""

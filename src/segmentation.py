@@ -18,7 +18,8 @@ warnings.filterwarnings('ignore')
 
 # Import database manager
 import sys
-sys.path.append('../app')
+#sys.path.append('../app')
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 from database import DatabaseManager
 
 # Set up logging

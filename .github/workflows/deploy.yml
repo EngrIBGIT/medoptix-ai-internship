@@ -1,0 +1,48 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow-dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # checkout the code and deploy to EC2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deloy to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+          script: |
+
+            # install docker and docker-compose
+            sudo apt-get update
+            sudo apt-get install -y docker.io docker-compose
+
+            #create directories if they do not exist
+            cd home/ubuntu/medoptix-api || mkdir home/ubuntu/medoptix-api cd home/ubuntu/medoptix-api
+
+            # pull the latest code
+            git pull origin main || git clone https://github.com/${{ github.repository }}.
+
+            # stop exiting docker container
+            docker stop medoptix-api || true
+
+            #pull the latest docker image
+            docker pull ${{ secrets.DOCKER_USERNAME }}/medoptix-api:latest
+
+            # START the docker compose
+            docker-compose up -d --build
+
+            # health check
+            sleep 30
+            curl -f http://localhost:8000/health || exit 1
+            echo "Deployment successful!"
